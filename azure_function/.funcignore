@@ -1,0 +1,4 @@
+local.settings.json
+.python-version
+.vscode
+.venv

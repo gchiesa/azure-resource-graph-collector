@@ -1,0 +1,20 @@
+.idea
+
+# Azure Function local development
+**/local.settings.json
+
+# temp stuff
+function.zip
+
+# terraform
+*.tfstate*
+tfplan
+*.terraform*
+*.auto.tfvars
+
+# virtualenv
+.venv
+.vscode
+.python_packages
+
+

@@ -1,0 +1,11 @@
+# Do not include azure-functions-worker as it may conflict with the Azure Functions platform
+
+azure-functions
+azure-mgmt-resourcegraph==8.0.0
+azure-mgmt-resource
+azure-cli-core
+azure.identity
+azure-common
+msrestazure
+python-logging-loki
+toolz
