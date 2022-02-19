@@ -16,7 +16,7 @@ def main(event: func.TimerRequest) -> None:
     logger.info("Started main function")
     logger.info(f"Event data: {event}")
 
-    credentials = DefaultAzureCredential()
+    credentials = DefaultAzureCredential(managed_identity_client_id=os.environ.get('USER_ASSIGNED_IDENTITY_APP_ID', None))
 
     rgraph_client = graph.ResourceGraphClient(credentials)
 
