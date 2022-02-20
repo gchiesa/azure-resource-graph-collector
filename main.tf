@@ -53,7 +53,10 @@ resource "azurerm_function_app" "function_app" {
   storage_account_access_key = azurerm_storage_account.sa.primary_access_key
   version                    = "~3"
   os_type                    = "linux"
-  app_settings               = {
+  site_config {
+    linux_fx_version = "python|3.8"
+  }
+  app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE"              = "1"
     "FUNCTIONS_WORKER_RUNTIME"              = "python"
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.appinsight.instrumentation_key

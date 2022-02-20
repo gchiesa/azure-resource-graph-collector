@@ -16,7 +16,8 @@ def main(event: func.TimerRequest) -> None:
     logger.info("Started main function")
     logger.info(f"Event data: {event}")
 
-    credentials = DefaultAzureCredential(managed_identity_client_id=os.environ.get('USER_ASSIGNED_IDENTITY_APP_ID', None))
+    credentials = DefaultAzureCredential(
+        managed_identity_client_id=os.environ.get('USER_ASSIGNED_IDENTITY_APP_ID', None))
 
     rgraph_client = graph.ResourceGraphClient(credentials)
 
@@ -41,6 +42,7 @@ def main(event: func.TimerRequest) -> None:
     # publish to loki
     loki = LokiPublisher(loki_endpoint=os.environ['LOKI_ENDPOINT'],
                          auth=(os.environ['LOKI_USERNAME'], os.environ['LOKI_PASSWORD']),
-                         tags={'inventory_type': 'reference_architecture'})
+                         tags={'inventory_type': 'reference_architecture',
+                               'graph_query_name': resource_graph_query.name})
     for item in result.as_dict().get('data', []):
         loki.publish(item)
