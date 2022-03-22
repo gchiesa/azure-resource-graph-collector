@@ -34,7 +34,8 @@ class LokiPublisher(object):
         timestamp = datetime.utcnow()
         data = {'timestamp': timestamp.isoformat()}
         data.update(message)
-        tag_data = self._prepare_tags(data)
+        # tag_data = self._prepare_tags(data)
         self.logger.debug(f"Logging entry:\n---\n{json.dumps(data)}\n---")
-        self.logger.info(f"tags: \n---\n{tag_data}\n---")
-        self.publisher.info(json.dumps(data), extra={'tags': tag_data})
+        # self.logger.info(f"tags: \n---\n{tag_data}\n---")
+        # self.publisher.info(json.dumps(data), extra={'tags': tag_data})
+        self.publisher.info(json.dumps(data))
