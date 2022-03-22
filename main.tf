@@ -121,6 +121,6 @@ resource "null_resource" "deploy_function" {
     always = data.archive_file.function_data.output_sha
   }
   provisioner "local-exec" {
-    command = "cd ${path.module}/azure_function; func azure functionapp publish --force ${azurerm_function_app.function_app.name}"
+    command = "cd ${path.module}/azure_function; func azure functionapp publish ${azurerm_function_app.function_app.name} --force"
   }
 }
