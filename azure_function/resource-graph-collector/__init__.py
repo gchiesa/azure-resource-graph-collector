@@ -9,9 +9,11 @@ from azure.mgmt.resource import SubscriptionClient
 from .graph_query import GraphQuery
 from .loki import LokiPublisher
 
+# default root level
+logging.Logger.root.level = logging.DEBUG
+
 
 def main(event: func.TimerRequest) -> None:
-    logging.basicConfig(level=logging.DEBUG)
     logger = logging.getLogger('main')
     logger.info("Started main function")
     logger.info(f"Event data: {event}")
