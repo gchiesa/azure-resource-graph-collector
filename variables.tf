@@ -25,6 +25,12 @@ variable "resource_graph_query_id" {
   description = "Resource Graph Query to use (must be a resource ID)."
 }
 
+variable "schedule_cron" {
+  type        = string
+  description = "A schedule cron definition. This will be used as period to query the graph id. Format is [sec min hour day week month]."
+  default     = "0 0 */2 * * *"
+}
+
 variable "resource_group" {
   type        = string
   default     = "rg-az-graph-collector"

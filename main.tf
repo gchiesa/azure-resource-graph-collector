@@ -73,7 +73,28 @@ resource "azurerm_function_app" "function_app" {
   }
 }
 
+resource "local_file" "function_json" {
+  filename = "${path.module}/azure_function/resource-graph-collector/function.json"
+  content = <<EOT
+{
+  "scriptFile": "__init__.py",
+  "bindings": [
+    {
+      "name": "event",
+      "type": "timerTrigger",
+      "direction": "in",
+      "schedule": "${var.schedule_cron}"
+    }
+  ]
+}
+EOT
+}
+
 data "archive_file" "function_data" {
+  depends_on = [
+    local_file.function_json
+  ]
+
   type        = "zip"
   output_path = "function.zip"
   excludes    = [
