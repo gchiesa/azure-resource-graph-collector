@@ -31,6 +31,12 @@ variable "schedule_cron" {
   default     = "0 0 */2 * * *"
 }
 
+variable "func_publish_additional_args" {
+  type = string
+  description = "Additional arguments to pass to the azure publish function. See `func azure publishapp --help`."
+  default = "--python"
+}
+
 variable "resource_group" {
   type        = string
   default     = "rg-az-graph-collector"
