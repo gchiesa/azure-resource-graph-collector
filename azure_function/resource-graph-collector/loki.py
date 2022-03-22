@@ -17,7 +17,7 @@ class LokiPublisher(object):
 
     def _initialize(self):
         self.publisher = logging.getLogger(f"{self.__class__.__name__}-publisher")
-        for handler in self.logger.handlers:
+        for handler in self.publisher.handlers:
             self.publisher.removeHandler(handler)
 
         self.publisher.addHandler(logging_loki.LokiHandler(url=self.endpoint,

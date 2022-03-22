@@ -34,15 +34,15 @@ def main(event: func.TimerRequest) -> None:
     logger.debug(f"target subscriptions dump: {subs_ids}")
 
     # build the query
-    graph_query = graph.models.QueryRequest(subscriptions=subs_ids, query=query)
-    result = rgraph_client.resources(graph_query)
+    gquery = graph.models.QueryRequest(subscriptions=subs_ids, query=query)
+    result = rgraph_client.resources(gquery)
     logger.info(f"Query results, total: {result.as_dict().get('total_records')}:\n---\n{result.as_dict()}\n---")
     logger.debug(f"Query results dump:\n---\n{result.as_dict()}\n---")
 
     # publish to loki
-    loki = LokiPublisher(loki_endpoint=os.environ['LOKI_ENDPOINT'],
-                         auth=(os.environ['LOKI_USERNAME'], os.environ['LOKI_PASSWORD']),
-                         tags={'inventory_type': 'reference_architecture',
-                               'graph_query_name': resource_graph_query.name})
+    loki_logger = LokiPublisher(loki_endpoint=os.environ['LOKI_ENDPOINT'],
+                                auth=(os.environ['LOKI_USERNAME'], os.environ['LOKI_PASSWORD']),
+                                tags={'inventory_type': 'reference_architecture',
+                                      'graph_query_name': resource_graph_query.name})
     for item in result.as_dict().get('data', []):
-        loki.publish(item)
+        loki_logger.publish(item)
