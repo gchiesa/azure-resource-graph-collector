@@ -32,11 +32,11 @@ class LokiPublisher(object):
         return tags
 
     def publish(self, message: dict):
-        # timestamp = datetime.utcnow()
-        # data = {'timestamp': timestamp.isoformat()}
-        # data.update(message)
-        tag_data = self._prepare_tags(message)
-        self.logger.debug(f"Logging entry:\n---\n{json.dumps(message)}\n---")
-        self.logger.info(f"tags: \n---\n{tag_data}\n---")
-        self.publisher.info(json.dumps(message), extra={'tags': tag_data})
-        # self.publisher.info(json.dumps(data))
+        timestamp = datetime.utcnow()
+        data = {'timestamp': timestamp.isoformat()}
+        data.update(message)
+        # tag_data = self._prepare_tags(message)
+        self.logger.debug(f"Logging entry:\n---\n{json.dumps(data)}\n---")
+        # self.logger.info(f"tags: \n---\n{tag_data}\n---")
+        # self.publisher.info(json.dumps(message), extra={'tags': tag_data})
+        self.publisher.info(json.dumps(data))
