@@ -26,8 +26,9 @@ class LokiPublisher(object):
                                                            version="1"))
 
     @staticmethod
-    def _prepare_tags(data: dict):
-        tags = {k: v for k, v in data.items() if isinstance(v, str)}
+    def _prepare_tags(data: dict) -> dict[str]:
+        """cleanup the tags"""
+        tags = {k.replace('-', '_'): v for k, v in data.items() if isinstance(v, str)}
         return tags
 
     def publish(self, message: dict):
