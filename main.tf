@@ -75,7 +75,7 @@ resource "azurerm_function_app" "function_app" {
 
 resource "local_file" "function_json" {
   filename = "${path.module}/azure_function/resource-graph-collector/function.json"
-  content = <<EOT
+  content  = <<EOT
 {
   "scriptFile": "__init__.py",
   "bindings": [
@@ -118,7 +118,8 @@ resource "null_resource" "deploy_function" {
   ]
 
   triggers = {
-    always = data.archive_file.function_data.output_sha || sha1(jsonencode(azurerm_function_app.function_app.app_settings))
+    code   = data.archive_file.function_data.output_sha
+    config = sha1(jsonencode(azurerm_function_app.function_app.app_settings))
   }
   provisioner "local-exec" {
     command = "cd ${path.module}/azure_function; func azure functionapp publish ${azurerm_function_app.function_app.name} ${var.func_publish_additional_args}"
