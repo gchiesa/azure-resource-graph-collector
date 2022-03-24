@@ -118,7 +118,7 @@ resource "null_resource" "deploy_function" {
   ]
 
   triggers = {
-    always = data.archive_file.function_data.output_sha
+    always = data.archive_file.function_data.output_sha || sha1(jsonencode(azurerm_function_app.function_app.app_settings))
   }
   provisioner "local-exec" {
     command = "cd ${path.module}/azure_function; func azure functionapp publish ${azurerm_function_app.function_app.name} ${var.func_publish_additional_args}"
