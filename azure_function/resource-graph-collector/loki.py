@@ -1,7 +1,7 @@
 import json
 import logging
 from copy import deepcopy
-from typing import Tuple, Optional
+from typing import Tuple, Optional, List
 
 from logging_loki import LokiHandler
 
@@ -48,7 +48,7 @@ class LokiPublisher(object):
                                                     auth=self.auth,
                                                     version="1", logger_for_errors=self.logger))
 
-    def _prepare_tags(self, data: dict, fields_to_labels: Optional[list[str]] = None):
+    def _prepare_tags(self, data: dict, fields_to_labels: Optional[List] = None):
         """loki only support X amount of tags"""
         tags = deepcopy(self.tags)
         if not fields_to_labels:
@@ -57,7 +57,7 @@ class LokiPublisher(object):
         tags.update({k: v for k, v in clean_tags.items() if k in fields_to_labels})
         return tags
 
-    def publish(self, message: dict, fields_to_labels: list[str] = None):
+    def publish(self, message: dict, fields_to_labels: Optional[List] = None):
         tags = self._prepare_tags(message, fields_to_labels)
         self.logger.debug(f"TAGS[{len(tags)}]: {tags}")
         self.logger.debug(f"Logging entry:\n---\n{json.dumps(message)}\n---")
