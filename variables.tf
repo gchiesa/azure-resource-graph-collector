@@ -20,6 +20,12 @@ variable "loki_authentication" {
   description = "Authentication information for Loki endpoint."
 }
 
+variable "loki_label_names" {
+  type        = string
+  description = "Comma separated list of fields to use as Loki entry labels (max 10 labels)."
+  default     = ""
+}
+
 variable "resource_graph_query_id" {
   type        = string
   description = "Resource Graph Query to use (must be a resource ID)."
@@ -32,9 +38,9 @@ variable "schedule_cron" {
 }
 
 variable "func_publish_additional_args" {
-  type = string
+  type        = string
   description = "Additional arguments to pass to the azure publish function. See `func azure publishapp --help`."
-  default = "--python"
+  default     = "--python"
 }
 
 variable "resource_group" {

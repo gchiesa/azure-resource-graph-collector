@@ -7,7 +7,7 @@ from azure.identity import DefaultAzureCredential
 from azure.mgmt.resource import SubscriptionClient
 
 from .graph_query import GraphQuery
-from .loki import LokiPublisher
+from .loki import LokiPublisher, MAX_LABELS
 
 # default root level
 logging.Logger.root.level = logging.DEBUG
@@ -46,5 +46,15 @@ def main(event: func.TimerRequest) -> None:
                                 auth=(os.environ['LOKI_USERNAME'], os.environ['LOKI_PASSWORD']),
                                 tags={'inventory_type': 'reference_architecture',
                                       'graph_query_name': resource_graph_query.name})
+
+    fields_to_labels_string = os.environ.get('LOKI_LABEL_NAMES', None)
+    fields_to_labels = []
+    if fields_to_labels_string:
+        fields_to_labels = [e.strip() for e in fields_to_labels_string.split(',')]
+
+    if len(fields_to_labels) > MAX_LABELS:
+        raise ValueError(f"A maximum of {MAX_LABELS} is supported. You requested: {len(fields_to_labels)} labels, "
+                         f"namely: [{', '.join(fields_to_labels)}]")
+
     for item in result.as_dict().get('data', []):
-        loki_logger.publish(item)
+        loki_logger.publish(item, fields_to_labels)

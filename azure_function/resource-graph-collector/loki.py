@@ -1,9 +1,11 @@
 import json
 import logging
-from datetime import datetime
-from typing import Tuple
+from copy import deepcopy
+from typing import Tuple, Optional
 
 from logging_loki import LokiHandler
+
+MAX_LABELS = 10
 
 
 class LokiCustomHandler(LokiHandler):
@@ -28,12 +30,12 @@ class LokiCustomHandler(LokiHandler):
 
 
 class LokiPublisher(object):
-    def __init__(self, loki_endpoint: str, auth: Tuple[str, str], tags: dict):
+    def __init__(self, loki_endpoint: str, auth: Tuple[str, str], tags: Optional[dict] = None):
         self.logger = logging.getLogger(self.__class__.__name__)
         self.publisher = None
         self.endpoint = loki_endpoint
         self.auth = auth
-        self.tags = tags
+        self.tags = tags or {}
         self._initialize()
 
     def _initialize(self):
@@ -46,15 +48,17 @@ class LokiPublisher(object):
                                                     auth=self.auth,
                                                     version="1", logger_for_errors=self.logger))
 
-    @staticmethod
-    def _prepare_tags(data: dict):
-        """cleanup the tags"""
-        tags = {k: v for k, v in data.items() if isinstance(v, str)}
+    def _prepare_tags(self, data: dict, fields_to_labels: Optional[list[str]] = None):
+        """loki only support X amount of tags"""
+        tags = deepcopy(self.tags)
+        if not fields_to_labels:
+            return tags
+        clean_tags = {k: v for k, v in data.items() if isinstance(v, str)}
+        tags.update({k: v for k, v in clean_tags.items() if k in fields_to_labels})
         return tags
 
-    def publish(self, message: dict):
-        timestamp = datetime.utcnow()
-        data = {'timestamp': timestamp.isoformat()}
-        data.update(message)
-        self.logger.debug(f"Logging entry:\n---\n{json.dumps(data)}\n---")
-        self.publisher.info(json.dumps(data), extra={'tags': self._prepare_tags(message)})
+    def publish(self, message: dict, fields_to_labels: list[str] = None):
+        tags = self._prepare_tags(message, fields_to_labels)
+        self.logger.debug(f"TAGS[{len(tags)}]: {tags}")
+        self.logger.debug(f"Logging entry:\n---\n{json.dumps(message)}\n---")
+        self.publisher.info(json.dumps(message), extra={'tags': tags})
