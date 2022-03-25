@@ -3,7 +3,28 @@ import logging
 from datetime import datetime
 from typing import Tuple
 
-import logging_loki
+from logging_loki import LokiHandler
+
+
+class LokiCustomHandler(LokiHandler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(
+            url=kwargs.get('url', None),
+            tags=kwargs.get('tags', None),
+            auth=kwargs.get('auth', None),
+            version=kwargs.get('version', None),
+        )
+        self._logger_for_errors = kwargs.get('logger_for_errors', None)
+
+    def emit(self, record: logging.LogRecord):
+        """Send log record to Loki."""
+        try:
+            self.emitter(record, self.format(record))
+        except Exception as e:
+            self._logger_for_errors.error(f"Error while publishing on Loki instance. Type: {str(type(e))}, "
+                                          f"Value: {str(e)}")
+            self.emitter.close()
+            raise
 
 
 class LokiPublisher(object):
@@ -20,23 +41,20 @@ class LokiPublisher(object):
         for handler in self.publisher.handlers:
             self.publisher.removeHandler(handler)
 
-        self.publisher.addHandler(logging_loki.LokiHandler(url=self.endpoint,
-                                                           tags=self.tags,
-                                                           auth=self.auth,
-                                                           version="1"))
+        self.publisher.addHandler(LokiCustomHandler(url=self.endpoint,
+                                                    tags=self.tags,
+                                                    auth=self.auth,
+                                                    version="1", logger_for_errors=self.logger))
 
     @staticmethod
     def _prepare_tags(data: dict):
         """cleanup the tags"""
-        tags = {k.replace('-', '_'): v for k, v in data.items() if isinstance(v, str)}
+        tags = {k: v for k, v in data.items() if isinstance(v, str)}
         return tags
 
     def publish(self, message: dict):
         timestamp = datetime.utcnow()
         data = {'timestamp': timestamp.isoformat()}
         data.update(message)
-        # tag_data = self._prepare_tags(message)
         self.logger.debug(f"Logging entry:\n---\n{json.dumps(data)}\n---")
-        # self.logger.info(f"tags: \n---\n{tag_data}\n---")
-        # self.publisher.info(json.dumps(message), extra={'tags': tag_data})
-        self.publisher.info(json.dumps(data))
+        self.publisher.info(json.dumps(data), extra={'tags': self._prepare_tags(message)})
