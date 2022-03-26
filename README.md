@@ -12,7 +12,7 @@ Graph Query and periodically collect the result and send them to a backend.
 It uses a managed identities to access the resources (saved graph query and subscription to run the query against).
 
 ## Supported backends
-Currently the only backend supported is [Loki](https://grafana.com/logs/). 
+Currently, the only backend supported is [Loki](https://grafana.com/logs/). 
 You can get a free [Grafanacloud account](https://grafana.com/auth/sign-up/create-user) and configure it to expose a 
 Loki endpoint to collect the results.
 
@@ -27,8 +27,26 @@ infrastructure deployment.
   - `Reader` with scope the subscriptions / management groups you want to run the query against
 
 ## Time Trigger 
-The function is periodically executed via Function App. You can configure your own time trigger in the 
-[function.json](azure_function/resource-graph-collector/function.json)
+The function is periodically executed via Function App. You can configure your own time trigger via the 
+`schedule_cron` terraform variable.
+
+## Loki Specifics 
+You can configure you Loki backend by provisioning the variables: 
+- `loki_endpoint_url`
+- `loki_authentication`
+
+Whilst the endpoint is public, it's recommended to use environment variable to pass the authentication credentials 
+(basic auth) in the form:
+
+```shell 
+export TF_VAR_loki_authentication='{"username"="<your_loki_id>", "password"="<your_loki_api_key>"}'
+```
+
+### Loki Labels
+The tool supports the generation of Loki labels based on the values you ingest via the resource graph query. The 
+tool supports up to 10 labels. You can specify what fields in the resource graph query you want to promote as labels 
+via the variable `loki_label_names`
+
 
 ## Local testing 
 
