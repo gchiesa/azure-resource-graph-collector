@@ -37,6 +37,16 @@ variable "schedule_cron" {
   default     = "0 0 */2 * * *"
 }
 
+variable "log_level" {
+  type        = string
+  description = "Log level for the deployed function. Possible values: [Debug, Information, Error]."
+  default     = "Information"
+  validation {
+    condition     = contains(["Debug", "Information", "Error"], var.log_level)
+    error_message = "Valid values are [Debug, Information, Error]."
+  }
+}
+
 variable "func_publish_additional_args" {
   type        = string
   description = "Additional arguments to pass to the azure publish function. See `func azure publishapp --help`."

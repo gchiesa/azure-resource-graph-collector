@@ -60,5 +60,5 @@ class LokiPublisher(object):
     def publish(self, message: dict, fields_to_labels: Optional[List] = None):
         tags = self._prepare_tags(message, fields_to_labels)
         self.logger.debug(f"TAGS[{len(tags)}]: {tags}")
-        self.logger.debug(f"Logging entry:\n---\n{json.dumps(message)}\n---")
+        self.logger.info(f"Logging entry:\n---\n{json.dumps(message)}\n---")
         self.publisher.info(json.dumps(message), extra={'tags': tags})

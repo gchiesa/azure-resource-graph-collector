@@ -16,7 +16,7 @@ logging.Logger.root.level = logging.DEBUG
 def main(event: func.TimerRequest) -> None:
     logger = logging.getLogger('main')
     logger.info("Started main function")
-    logger.info(f"Event data: {event}")
+    logger.debug(f"Event data: {event}")
 
     credentials = DefaultAzureCredential(
         managed_identity_client_id=os.environ.get('USER_ASSIGNED_IDENTITY_APP_ID', None))
@@ -38,7 +38,7 @@ def main(event: func.TimerRequest) -> None:
     # build the query
     gquery = graph.models.QueryRequest(subscriptions=subs_ids, query=query)
     result = rgraph_client.resources(gquery)
-    logger.info(f"Query results, total: {result.as_dict().get('total_records')}:\n---\n{result.as_dict()}\n---")
+    logger.info(f"Query results, total: {result.as_dict().get('total_records')}")
     logger.debug(f"Query results dump:\n---\n{result.as_dict()}\n---")
 
     # publish to loki
