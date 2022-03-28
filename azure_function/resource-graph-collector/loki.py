@@ -43,10 +43,9 @@ class LokiPublisher(object):
         for handler in self.publisher.handlers:
             self.publisher.removeHandler(handler)
 
-        self.publisher.addHandler(LokiCustomHandler(url=self.endpoint,
-                                                    tags=self.tags,
-                                                    auth=self.auth,
-                                                    version="1", logger_for_errors=self.logger))
+        self.publisher.addHandler(LokiCustomHandler(url=self.endpoint, tags=self.tags, auth=self.auth, version="1",
+                                                    logger_for_errors=self.logger))
+        self.publisher.propagate = False
 
     def _prepare_tags(self, data: dict, fields_to_labels: Optional[List] = None):
         """loki only support X amount of tags"""
