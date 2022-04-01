@@ -3,51 +3,33 @@ import logging
 from copy import deepcopy
 from typing import Tuple, Optional, List
 
-from logging_loki import LokiHandler
+from logging_loki.emitter import LokiEmitterV1
+from logging import LogRecord
 
 MAX_LABELS = 10
+LOKI_EVENT_NAME = 'LokiPublisher'
+LOKI_EVENT_LOG_LEVEL = logging.INFO
 
 
-class LokiCustomHandler(LokiHandler):
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            url=kwargs.get('url', None),
-            tags=kwargs.get('tags', None),
-            auth=kwargs.get('auth', None),
-            version=kwargs.get('version', None),
-        )
-        self._logger_for_errors = kwargs.get('logger_for_errors', None)
-
-    def emit(self, record: logging.LogRecord):
-        """Send log record to Loki."""
-        try:
-            self.emitter(record, self.format(record))
-        except Exception as e:
-            self._logger_for_errors.error(f"Error while publishing on Loki instance. Type: {str(type(e))}, "
-                                          f"Value: {str(e)}")
-            self.emitter.close()
-            raise
+def make_loki_event(message, tags) -> LogRecord:
+    global LOKI_EVENT_NAME, LOKI_EVENT_LOG_LEVEL
+    log_record = LogRecord(name=LOKI_EVENT_NAME, level=LOKI_EVENT_LOG_LEVEL, pathname="", lineno=0, msg=message,
+                           args=None,
+                           exc_info=None)
+    setattr(log_record, "tags", tags)
+    return log_record
 
 
 class LokiPublisher(object):
     def __init__(self, loki_endpoint: str, auth: Tuple[str, str], tags: Optional[dict] = None):
         self.logger = logging.getLogger(self.__class__.__name__)
-        self.publisher = None
         self.endpoint = loki_endpoint
         self.auth = auth
         self.tags = tags or {}
-        self._initialize()
-
-    def _initialize(self):
-        self.publisher = logging.getLogger(f"{self.__class__.__name__}-publisher")
-        for handler in self.publisher.handlers:
-            self.publisher.removeHandler(handler)
-
-        self.publisher.addHandler(LokiCustomHandler(url=self.endpoint, tags=self.tags, auth=self.auth, version="1",
-                                                    logger_for_errors=self.logger))
+        self.emitter = LokiEmitterV1(self.endpoint, self.tags, self.auth)
 
     def _prepare_tags(self, data: dict, fields_to_labels: Optional[List] = None):
-        """loki only support X amount of tags"""
+        """loki only support MAX_LABELS amount of tags"""
         tags = deepcopy(self.tags)
         if not fields_to_labels:
             return tags
@@ -58,5 +40,6 @@ class LokiPublisher(object):
     def publish(self, message: dict, fields_to_labels: Optional[List] = None):
         tags = self._prepare_tags(message, fields_to_labels)
         self.logger.debug(f"TAGS[{len(tags)}]: {tags}")
-        self.logger.debug(f"Logging entry:\n---\n{json.dumps(message)}\n---")
-        self.publisher.info(json.dumps(message), extra={'tags': tags})
+        self.logger.info(f"Logging entry:\n---\n{json.dumps(message)}\n---")
+        loki_event = make_loki_event(message, tags)
+        self.emitter(loki_event, json.dumps(message))
