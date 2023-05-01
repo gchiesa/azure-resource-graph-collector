@@ -66,7 +66,7 @@ resource "azurerm_function_app" "function_app" {
     "LOKI_PASSWORD"                         = var.loki_authentication.password,
     "LOKI_ENDPOINT"                         = var.loki_endpoint_url,
     "LOKI_LABEL_NAMES"                      = var.loki_label_names,
-    "RESOURCE_GRAPH_QUERY_ID"               = var.resource_graph_query_id,
+    "RESOURCE_GRAPH_QUERY_IDS"               = var.resource_graph_query_ids,
   }
   identity {
     type         = "UserAssigned"
