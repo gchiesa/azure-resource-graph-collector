@@ -26,9 +26,9 @@ variable "loki_label_names" {
   default     = ""
 }
 
-variable "resource_graph_query_id" {
+variable "resource_graph_query_ids" {
   type        = string
-  description = "Resource Graph Query to use (must be a resource ID)."
+  description = "Comma separated list of Resource Graph Query to use (must be a resource ID)."
 }
 
 variable "schedule_cron" {
