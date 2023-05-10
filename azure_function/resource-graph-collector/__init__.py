@@ -24,7 +24,7 @@ def main(event: func.TimerRequest) -> None:
     rgraph_client = graph.ResourceGraphClient(credentials)
 
     # Get the query from the saved resource graph query
-    resource_graph_queries = os.environ['RESOURCE_GRAPH_QUERY_IDS']
+    resource_graph_queries = os.environ['RESOURCE_GRAPH_QUERY_IDS'].split(',')
     for query in resource_graph_queries:
         resource_graph_query = GraphQuery(query)
         logger.info(f"retrieving graph query from resource id: [{resource_graph_query.resource_id}]")
