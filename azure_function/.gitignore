@@ -21,6 +21,7 @@ project.lock.json
 .secrets
 appsettings.json
 local.settings.json
+*.csv
 
 node_modules
 dist

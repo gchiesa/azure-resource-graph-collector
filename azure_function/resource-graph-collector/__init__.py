@@ -8,26 +8,30 @@ from azure.mgmt.resource import SubscriptionClient
 
 from .graph_query import GraphQuery
 from .loki import LokiPublisher, MAX_LABELS
+from .azure_blob import AzurePublisher
 
 # default root level
 logging.Logger.root.level = logging.DEBUG
 
 
 def main(event: func.TimerRequest) -> None:
-    logger = logging.getLogger('main')
+    logger = logging.getLogger("main")
     logger.info("Started main function")
     logger.debug(f"Event data: {event}")
 
     credentials = DefaultAzureCredential(
-        managed_identity_client_id=os.environ.get('USER_ASSIGNED_IDENTITY_APP_ID', None))
+        managed_identity_client_id=os.environ.get("USER_ASSIGNED_IDENTITY_APP_ID", None)
+    )
 
     rgraph_client = graph.ResourceGraphClient(credentials)
 
     # Get the query from the saved resource graph query
-    resource_graph_queries = os.environ['RESOURCE_GRAPH_QUERY_IDS'].split(',')
+    resource_graph_queries = os.environ["RESOURCE_GRAPH_QUERY_IDS"].split(",")
     for query in resource_graph_queries:
         resource_graph_query = GraphQuery(query)
-        logger.info(f"retrieving graph query from resource id: [{resource_graph_query.resource_id}]")
+        logger.info(
+            f"retrieving graph query from resource id: [{resource_graph_query.resource_id}]"
+        )
         query = resource_graph_query.with_graph_client(rgraph_client).get_query()
         logger.debug(f"loaded query:\n---\n{query}\n---")
 
@@ -44,19 +48,34 @@ def main(event: func.TimerRequest) -> None:
         logger.debug(f"Query results dump:\n---\n{result.as_dict()}\n---")
 
         # publish to loki
-        loki_logger = LokiPublisher(loki_endpoint=os.environ['LOKI_ENDPOINT'],
-                                    auth=(os.environ['LOKI_USERNAME'], os.environ['LOKI_PASSWORD']),
-                                    tags={'inventory_type': 'reference_architecture',
-                                        'graph_query_name': resource_graph_query.name})
+        loki_logger = LokiPublisher(
+            loki_endpoint=os.environ["LOKI_ENDPOINT"],
+            auth=(os.environ["LOKI_USERNAME"], os.environ["LOKI_PASSWORD"]),
+            tags={
+                "inventory_type": "reference_architecture",
+                "graph_query_name": resource_graph_query.name,
+            },
+        )
 
-        fields_to_labels_string = os.environ.get('LOKI_LABEL_NAMES', None)
+        fields_to_labels_string = os.environ.get("LOKI_LABEL_NAMES", None)
         fields_to_labels = []
         if fields_to_labels_string:
-            fields_to_labels = [e.strip() for e in fields_to_labels_string.split(',')]
+            fields_to_labels = [e.strip() for e in fields_to_labels_string.split(",")]
 
         if len(fields_to_labels) > MAX_LABELS:
-            raise ValueError(f"A maximum of {MAX_LABELS} is supported. You requested: {len(fields_to_labels)} labels, "
-                            f"namely: [{', '.join(fields_to_labels)}]")
+            raise ValueError(
+                f"A maximum of {MAX_LABELS} is supported. You requested: {len(fields_to_labels)} labels, "
+                f"namely: [{', '.join(fields_to_labels)}]"
+            )
 
-        for item in result.as_dict().get('data', []):
+        for item in result.as_dict().get("data", []):
             loki_logger.publish(item, fields_to_labels)
+
+        # publish to Azure Blob container
+        azure_publisher = AzurePublisher(
+            connection_string=os.environ["STORAGE_ACCOUNT_CONNECTION"],
+            container_name=os.environ["CONTAINER_NAME"],
+        )
+        azure_publisher.publish(
+            name=resource_graph_query.name, data=result.as_dict().get("data", [])
+        )

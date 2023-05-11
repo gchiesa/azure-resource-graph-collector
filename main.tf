@@ -61,12 +61,14 @@ resource "azurerm_function_app" "function_app" {
     "FUNCTIONS_WORKER_RUNTIME"              = "python"
     "APPINSIGHTS_INSTRUMENTATIONKEY"        = azurerm_application_insights.appinsight.instrumentation_key
     "APPLICATIONINSIGHTS_CONNECTION_STRING" = "InstrumentationKey=${azurerm_application_insights.appinsight.instrumentation_key};IngestionEndpoint=https://${var.location}-0.in.applicationinsights.azure.com/"
-    "USER_ASSIGNED_IDENTITY_APP_ID"         = data.azurerm_user_assigned_identity.identity.client_id,
-    "LOKI_USERNAME"                         = var.loki_authentication.username,
-    "LOKI_PASSWORD"                         = var.loki_authentication.password,
-    "LOKI_ENDPOINT"                         = var.loki_endpoint_url,
-    "LOKI_LABEL_NAMES"                      = var.loki_label_names,
-    "RESOURCE_GRAPH_QUERY_IDS"               = var.resource_graph_query_ids,
+    "USER_ASSIGNED_IDENTITY_APP_ID"         = data.azurerm_user_assigned_identity.identity.client_id
+    "LOKI_USERNAME"                         = var.loki_authentication.username
+    "LOKI_PASSWORD"                         = var.loki_authentication.password
+    "LOKI_ENDPOINT"                         = var.loki_endpoint_url
+    "LOKI_LABEL_NAMES"                      = var.loki_label_names
+    "RESOURCE_GRAPH_QUERY_IDS"              = var.resource_graph_query_ids
+    "STORAGE_ACCOUNT_CONNECTION"            = azurerm_storage_account.sa.primary_connection_string
+    "CONTAINER_NAME"                        = azurerm_storage_container.sacontainer.name
   }
   identity {
     type         = "UserAssigned"
