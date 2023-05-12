@@ -28,7 +28,7 @@ resource "azurerm_application_insights" "appinsight" {
     {
       # https://github.com/terraform-providers/terraform-provider-azurerm/issues/1303
       "hidden-link:${azurerm_resource_group.rg.id}/providers/Microsoft.Web/sites/${var.function_app_identifier}-function-app" = "Resource"
-    })
+  })
 }
 
 resource "azurerm_app_service_plan" "service_plan" {
@@ -69,6 +69,9 @@ resource "azurerm_function_app" "function_app" {
     "RESOURCE_GRAPH_QUERY_IDS"              = var.resource_graph_query_ids
     "STORAGE_ACCOUNT_CONNECTION"            = azurerm_storage_account.sa.primary_connection_string
     "CONTAINER_NAME"                        = azurerm_storage_container.sacontainer.name
+    "ENABLE_LOKI_PUBLISHER"                 = var.enable_loki_publisher
+    "ENABLE_AZURE_BLOB_PUBLISHER"           = var.enable_azure_blob_publisher
+
   }
   identity {
     type         = "UserAssigned"

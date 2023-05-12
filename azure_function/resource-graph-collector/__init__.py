@@ -14,6 +14,18 @@ from .azure_blob import AzurePublisher
 logging.Logger.root.level = logging.DEBUG
 
 
+def is_enabled(publisher_flag: str) -> bool:
+    """
+    Given the publisher flag returns True or False
+    Args:
+        publisher_flag: Flag containing string 'true'|'false'
+    """
+    if publisher_flag.lower() == "true":
+        return True
+    else:
+        return False
+
+
 def main(event: func.TimerRequest) -> None:
     logger = logging.getLogger("main")
     logger.info("Started main function")
@@ -48,34 +60,36 @@ def main(event: func.TimerRequest) -> None:
         logger.debug(f"Query results dump:\n---\n{result.as_dict()}\n---")
 
         # publish to loki
-        loki_logger = LokiPublisher(
-            loki_endpoint=os.environ["LOKI_ENDPOINT"],
-            auth=(os.environ["LOKI_USERNAME"], os.environ["LOKI_PASSWORD"]),
-            tags={
-                "inventory_type": "reference_architecture",
-                "graph_query_name": resource_graph_query.name,
-            },
-        )
-
-        fields_to_labels_string = os.environ.get("LOKI_LABEL_NAMES", None)
-        fields_to_labels = []
-        if fields_to_labels_string:
-            fields_to_labels = [e.strip() for e in fields_to_labels_string.split(",")]
-
-        if len(fields_to_labels) > MAX_LABELS:
-            raise ValueError(
-                f"A maximum of {MAX_LABELS} is supported. You requested: {len(fields_to_labels)} labels, "
-                f"namely: [{', '.join(fields_to_labels)}]"
+        if is_enabled(os.environ.get("ENABLE_LOKI_PUBLISHER", "true")):
+            loki_logger = LokiPublisher(
+                loki_endpoint=os.environ["LOKI_ENDPOINT"],
+                auth=(os.environ["LOKI_USERNAME"], os.environ["LOKI_PASSWORD"]),
+                tags={
+                    "inventory_type": "reference_architecture",
+                    "graph_query_name": resource_graph_query.name,
+                },
             )
 
-        for item in result.as_dict().get("data", []):
-            loki_logger.publish(item, fields_to_labels)
+            fields_to_labels_string = os.environ.get("LOKI_LABEL_NAMES", None)
+            fields_to_labels = []
+            if fields_to_labels_string:
+                fields_to_labels = [e.strip() for e in fields_to_labels_string.split(",")]
+
+            if len(fields_to_labels) > MAX_LABELS:
+                raise ValueError(
+                    f"A maximum of {MAX_LABELS} is supported. You requested: {len(fields_to_labels)} labels, "
+                    f"namely: [{', '.join(fields_to_labels)}]"
+                )
+
+            for item in result.as_dict().get("data", []):
+                loki_logger.publish(item, fields_to_labels)
 
         # publish to Azure Blob container
-        azure_publisher = AzurePublisher(
-            connection_string=os.environ["STORAGE_ACCOUNT_CONNECTION"],
-            container_name=os.environ["CONTAINER_NAME"],
-        )
-        azure_publisher.publish(
-            name=resource_graph_query.name, data=result.as_dict().get("data", [])
-        )
+        if is_enabled(os.environ.get("ENABLE_AZURE_BLOB_PUBLISHER", "false")):
+            azure_publisher = AzurePublisher(
+                connection_string=os.environ["STORAGE_ACCOUNT_CONNECTION"],
+                container_name=os.environ["CONTAINER_NAME"],
+            )
+            azure_publisher.publish(
+                name=resource_graph_query.name, data=result.as_dict().get("data", [])
+            )
