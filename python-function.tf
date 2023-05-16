@@ -59,6 +59,13 @@ resource "null_resource" "deploy_function" {
     config = sha1(jsonencode(azurerm_function_app.function_app.app_settings))
   }
   provisioner "local-exec" {
-    command = "cd ${path.module}/azure_function; func azure functionapp publish ${azurerm_function_app.function_app.name} ${var.func_publish_additional_args}"
+    command = <<EXEC
+    python tools/deploy_function_app.py \
+      --root-dir azure_function \
+      --function-dir resource-graph-collector \
+      --subscription ${data.azurerm_subscription.current.display_name} \
+      --resource-group ${azurerm_resource_group.rg.name} \
+      --app-name ${azurerm_function_app.function_app.name}
+EXEC
   }
 }

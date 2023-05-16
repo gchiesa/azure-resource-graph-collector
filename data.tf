@@ -16,3 +16,5 @@ data "archive_file" "function_data" {
   ]
   source_dir = "${path.module}/azure_function"
 }
+
+data "azurerm_subscription" "current" {}
