@@ -72,10 +72,22 @@ variable "function_app_identifier" {
 }
 
 variable "tags" {
-  type    = map(string)
+  type = map(string)
   default = {
     "deployer"    = "gchiesa"
     "application" = "azure-resource-graph-collector"
     "stage"       = "dev"
   }
+}
+
+variable "enable_loki_publisher" {
+  type        = bool
+  default     = true
+  description = "Flag to enable write the queries result into Loki"
+}
+
+variable "enable_azure_blob_publisher" {
+  type        = bool
+  default     = false
+  description = "Flag to enable write the queries result into Azure Blob Container"
 }
