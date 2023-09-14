@@ -9,6 +9,7 @@ from azure.mgmt.resource import SubscriptionClient
 from .graph_query import GraphQuery
 from .loki import LokiPublisher, MAX_LABELS
 from .azure_blob import AzurePublisher
+from .azure_table import AzureTable
 
 # default root level
 logging.Logger.root.level = logging.DEBUG
@@ -59,6 +60,18 @@ def main(event: func.TimerRequest) -> None:
         logger.info(f"Query results, total: {result.as_dict().get('total_records')}")
         logger.debug(f"Query results dump:\n---\n{result.as_dict()}\n---")
 
+        # enrich result with data in Azure Table
+        result_2publish = result.as_dict().get("data", [])
+        for item in result_2publish:
+            row_key = item["subscriptionId"]
+            filter = f"RowKey eq '{row_key}'"
+            azure_table = AzureTable()
+            azure_table_entities = azure_table.query_entities(filter)
+            pu = azure_table_entities[0]["PU"]
+            techcontact = azure_table_entities[0]["techContact"]
+            item["pu"] = pu
+            item["techcontact"] = techcontact
+
         # publish to loki
         if is_enabled(os.environ.get("ENABLE_LOKI_PUBLISHER", "true")):
             loki_logger = LokiPublisher(
@@ -73,7 +86,9 @@ def main(event: func.TimerRequest) -> None:
             fields_to_labels_string = os.environ.get("LOKI_LABEL_NAMES", None)
             fields_to_labels = []
             if fields_to_labels_string:
-                fields_to_labels = [e.strip() for e in fields_to_labels_string.split(",")]
+                fields_to_labels = [
+                    e.strip() for e in fields_to_labels_string.split(",")
+                ]
 
             if len(fields_to_labels) > MAX_LABELS:
                 raise ValueError(
@@ -81,7 +96,7 @@ def main(event: func.TimerRequest) -> None:
                     f"namely: [{', '.join(fields_to_labels)}]"
                 )
 
-            for item in result.as_dict().get("data", []):
+            for item in result_2publish:
                 loki_logger.publish(item, fields_to_labels)
 
         # publish to Azure Blob container
@@ -91,5 +106,5 @@ def main(event: func.TimerRequest) -> None:
                 container_name=os.environ["CONTAINER_NAME"],
             )
             azure_publisher.publish(
-                name=resource_graph_query.name, data=result.as_dict().get("data", [])
+                name=resource_graph_query.name, data=result_2publish
             )
