@@ -54,7 +54,7 @@ resource "azurerm_function_app" "function_app" {
   version                    = "~3"
   os_type                    = "linux"
   site_config {
-    linux_fx_version = "python|3.8"
+    linux_fx_version = "python|3.9"
   }
   app_settings = {
     "WEBSITE_RUN_FROM_PACKAGE"              = "1"
